@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "query"
+version = "0.1.0"
+description = ""
+authors = ["Cliff Wulfman <cwulfman@princeton.edu>"]
+readme = "README.md"
+packages = [{include = "query", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+rdflib = "^6.1.1"
+requests = "^2.27.1"
+SPARQLWrapper = "^2.0.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.1.0"
+pylint = "^2.12.2"
+black = "^22.1.0"
+flake8 = "^4.0.1"
+Sphinx = "^4.4.0"
+tox = "^3.24.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
