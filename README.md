@@ -1,2 +1,2 @@
-# finding_aid_enrichment
-An exploration of ways to enhance finding aids with names of under-represented people
+# Finding Aid Enrichment
+Princeton University Library (PUL) seeks to use machine methods to enhance a subset of its digitized archival collections with accompanying archival descriptive metadata from its holdings via a pilot project in collaboration with the vendor that best suits the needs and expectations for the project. The initial phase is intended to provide research opportunities and discovery of the people, places, organizations, and subjects that may be missing from historic or descriptive catalog records.
