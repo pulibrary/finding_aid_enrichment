@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "adam"
+version = "0.1.0"
+description = ""
+authors = ["Cliff Wulfman <cwulfman@princeton.edu>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+spacy = "^3.2.1"
+pytesseract = "^0.3.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+black = "^21.12b0"
+pylint = "^2.12.2"
+flake8 = "^4.0.1"
+Sphinx = "^4.4.0"
+tox = "^3.24.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
