@@ -15,10 +15,6 @@ def fixture_basic_page():
     return Page(testable_image)
 
 
-def test_simple(basic_page):
-    assert basic_page.image_file == testable_image
-
-
 def test_text(basic_page):
     assert len(basic_page.text) > 0
 
@@ -27,3 +23,6 @@ def test_hocr(basic_page):
 
 def test_alto(basic_page):
     assert len(basic_page.alto) > 0
+
+def test_nlp(basic_page):
+    assert "Acheson" in [token.text for token in basic_page.doc.ents]

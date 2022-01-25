@@ -1,7 +1,6 @@
 """The adam Page module
 
-The Page module encapsulates OCR and NER.  Eventually it could be
-re-factored to take OCR and NER objects as injections.
+The Page module encapsulates OCR and NER.
 
   Typical usage:
 
@@ -17,12 +16,14 @@ try:
 except ImportError:
     import Image
 import pytesseract
+import spacy
 
 
 class Page:
     """Encapsulates OCR and NER processes.
 
-    
+    The class could eventually be refactored to take OCR
+    and NER objects as injections.
 
     """
     def __init__(self, page_image):
@@ -30,6 +31,8 @@ class Page:
         self._text = False
         self._hocr = False
         self._alto = False
+        self._nlp = False
+        self._doc = False
 
     @property
     def image_file(self):
@@ -53,6 +56,12 @@ class Page:
             self.do_ocr_to_alto()
         return self._alto
 
+    @property
+    def doc(self):
+        if not self._doc:
+            self.do_nlp()
+        return self._doc
+
     def do_ocr_to_string(self):
         self._text = pytesseract.image_to_string(Image.open(self.image_file))
 
@@ -63,3 +72,9 @@ class Page:
     def do_ocr_to_alto(self):
         self._alto = pytesseract.image_to_alto_xml(
             Image.open(self.image_file))
+
+    def do_nlp(self):
+        if not self._nlp:
+            self._nlp = spacy.load('en_core_web_trf')
+        self._doc = self._nlp(self.text)
+        return self._doc
