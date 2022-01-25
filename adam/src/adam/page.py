@@ -1,7 +1,16 @@
-# -*- coding: utf-8 -*-
-# page.py
-"""The Page module encapsulates OCR and NER.  Eventually it could be
-re-factored to take OCR and NER objects as injections."""
+"""The adam Page module
+
+The Page module encapsulates OCR and NER.  Eventually it could be
+re-factored to take OCR and NER objects as injections.
+
+  Typical usage:
+
+  page = Page(path_to_image)
+  page_text = page.text
+  page_hocr = page.hocr
+  page_alto = page.alto
+
+"""
 
 try:
     from PIL import Image
@@ -11,7 +20,11 @@ import pytesseract
 
 
 class Page:
-    """Page class"""
+    """Encapsulates OCR and NER processes.
+
+    
+
+    """
     def __init__(self, page_image):
         self._image_file = page_image
         self._text = False
