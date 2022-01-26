@@ -1,0 +1,87 @@
+* Modeling the data
+  Trying to model this as a graph.
+
+  Using CIDOC-CRM to model this, we can talk about it this way:
+
+  - the ocr'd string is a Symbolic_Object
+  - it composes an Inscription
+  - the inscription is carried by an sc:Canvas
+
+  #+begin_quote
+  rdfs:comment "Scope note:
+  This class comprises identifiable symbols and any aggregation of symbols, such as characters, identifiers, traffic signs, emblems, texts, data sets, images, musical scores, multimedia objects, computer program code or mathematical formulae that have an objectively recognizable structure and that are documented as single units.
+
+  It includes sets of signs of any nature, which may serve to designate something, or to communicate some propositional content. An instance of E90 Symbolic Object may or may not have a specific meaning, for example an arbitrary character string.
+
+  In some cases, the content of an instance of E90 Symbolic Object may completely be represented by a serialized digital content model, such as a sequence of ASCII-encoded characters, an XML or HTML document, or a TIFF image. The property P3 has note and its subproperty P190 has symbolic content allow for the description of this content model. In order to disambiguate which symbolic level is the carrier of the meaning, the property P3.1 has type can be used to specify the encoding (e.g. \"bit\", \"Latin character\", RGB pixel).
+
+
+  Examples:
+  - ‘ecognizabl’
+  - The “no-smoking” sign (E36)
+  - “BM000038850.JPG” (E41)
+  - image BM000038850.JPG from the Clayton Herbarium in London (E36)
+  - The distribution of form, tone and colour found on Leonardo da Vinci’s painting named “Mona Lisa” in daylight (E36)
+  - The Italian text of Dante’s “Divina Commedia” as found in the authoritative critical edition La Commedia secondo l’antica vulgata a cura di Giorgio Petrocchi, Milano: Mondadori, 1966-67 (= Le Opere di Dante Alighieri, Edizione Nazionale a cura della Società Dantesca Italiana, VII, 1-4) (E33)
+
+
+  In First Order Logic:
+  E90(x) ⊃ E28(x)
+  E90(x) ⊃ E72(x)"@en
+  #+end_quote
+
+  SpaCy yields a series of entity objects, which have various
+  properties we may want to exploit.  For now, though, we'll simply
+  extract the lexical properties.
+
+  #+begin_src n3
+           @prefix crm: <http://erlangen-crm.org/200717/> .
+           @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+           @prefix ocr: <https://figgy.princeton.edu/concern/scanned_resources/6a83801b-9169-40a4-8ca7-1494c94727b9/ocr/> .
+           @prefix sc: <http://iiif.io/api/presentation/2#> .                                                                                
+
+           @prefix inscription: <https://figgy.princeton.edu/concern/scanned_resources/6a83801b-9169-40a4-8ca7-1494c94727b9/ocr/> .
+           @prefix canvas: <https://figgy.princeton.edu/concern/scanned_resources/6a83801b-9169-40a4-8ca7-1494c94727b9/manifest/canvas/> .
+
+           ocr:1 a crm:E90_Symbolic_Object ;
+                 rdfs:label "Acheson" ;
+                 crm:P190_has_symbolic_content "Acheson" .
+
+           canvas:07ff98c4-dfdf-499b-84a9-9338e8169615 a sc:Canvas .                          
+
+           inscription:1 a crm:E34_Inscription ;
+                 crm:P106_is_composed_of ocr:1 ;
+                 crm:P128i_is_carried_by canvas:07ff98c4-dfdf-499b-84a9-9338e8169615 .
+  #+end_src
+
+  We use RDF prefixes to give our topics unique URIs by linking them
+  back to the figgy objects.  Here we say that a particular IIIF
+  canvas carries an inscription, and that the inscription is made up
+  of a single symbolic object, ocr:1, whose content is represented by
+  the string "Acheson". There may other things we can say about
+  inscription:1, such as its location on the canvas in some coordinate
+  system (thus capturing the coordinates of the OCR), but we'll stay
+  simple for the moment.
+
+  Nothing about named entities so far.  But from spaCy's NER
+  processing we can conclude that this inscription is the name of a
+  person.
+
+  #+begin_src n3
+        @prefix inscription: <https://figgy.princeton.edu/concern/scanned_resources/6a83801b-9169-40a4-8ca7-1494c94727b9/ocr/> .
+        @prefix crm: <http://erlangen-crm.org/200717/> .
+        @prefix spacy: <http://some/address/here/> .
+
+        spacy:PersonName a crm:E55_Type;
+                         rdfs:label "PERSON" .
+
+        inscription:1 a crm:Appellation ;
+                      crm:P2_has_type spacy:PersonName .
+  #+end_src
+
+  Later, the name might be linked to a known entity:
+
+  #+begin_src n3
+    <http://viaf.org/viaf/76361317> a crm:E21_Person .
+    inscription:1 crm:P1i_identifies <http://viaf.org/viaf/76361317> .
+  #+end_src

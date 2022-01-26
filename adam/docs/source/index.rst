@@ -3,8 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Adam's documentation!
-================================
+Adam, a Named-Entity Extractor
+==============================
+
+Adam is a Python package that may be used to create a graph of the named
+entities in a IIIF resource.
+
+
 
 .. toctree::
    :maxdepth: 2
