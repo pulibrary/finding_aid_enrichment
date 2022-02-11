@@ -25,4 +25,3 @@ def test_serialization(simple_container):
     simple_container.build_graph()
     simple_container.serialize(outfile, 'ttl')
     assert(os.path.exists(outfile))
-

@@ -1,0 +1,4 @@
+"""
+The Collection class.
+"""
+

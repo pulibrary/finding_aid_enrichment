@@ -13,7 +13,7 @@ Pages may be serialized as graphs of
 entities.
 """
 
-from sys import stdout
+import urllib.request
 
 try:
     from PIL import Image
@@ -21,85 +21,11 @@ except ImportError:
     import Image
 import pytesseract
 import spacy
-from rdflib import Graph, Literal, Namespace, URIRef, XSD
-from rdflib.namespace import RDFS, RDF
-import shortuuid
-import urllib.request
-import json
+from rdflib import URIRef
+from rdflib.namespace import RDF
+from adam.graphable import Graphable
+from adam.named_entity import NamedEntity
 
-
-class Graphable:
-    """ The Graphable class holds info about ontologies"""
-
-    def __init__(self):
-        """Initializes a Graphable. Sets up namespaces and establishes an id."""
-        self._graph = Graph()
-        self._namespaces = {
-            "ecrm": Namespace("http://erlangen-crm.org/200717/"),
-            "sc": Namespace("http://iiif.io/api/presentation/2#"),
-            "page": Namespace("https://figgy.princeton.edu/concerns/pages/"),
-            "entity": Namespace("https://figgy.princeton.edu/concerns/entities/"),
-            "inscription": Namespace("https://figgy.princeton.edu/concerns/inscriptions/"),
-            "etype": Namespace("https://figgy.princeton.edu/concerns/adam/")
-        }
-
-        manager = self._graph.namespace_manager
-
-        for prefix, namespace in self._namespaces.items():
-            manager.bind(prefix, namespace)
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def graph(self):
-        return self._graph
-
-    def namespace(self, key):
-        return self._namespaces[key]
-
-    def gen_id(self, ns):
-        return self.namespace(ns)[shortuuid.uuid()]
-
-    def build_graph(self):
-        """Does nothing in the base class; intended to be implemented by each subclass"""
-        pass
-
-    def serialize(self, path=stdout, format='ttl'):
-        self.graph.serialize(destination=path, format=format)
-
-
-class NamedEntity(Graphable):
-    """Holds data from spaCy"""
-    def __init__(self, ent):
-        super().__init__()
-        self._id = self.gen_id('entity')
-        self._string = ent.text
-        self.type = ent.label_
-        self.build_graph()
-
-    def build_graph(self):
-        """
-        Constructs a graph that looks like this:
-
-        id a ecrm:E90_Symbolic_Object;
-           rdfs:label "Acheson";
-           ecrm:P190_has_symbolic_content "Acheson" .
-        """
-        content = Literal(self._string)
-        self.graph.add((self.id,
-                        RDF.type,
-                        self.namespace('ecrm')['E90_Symbolic_Object']))
-
-        self.graph.add((self.id,
-                        RDFS.label,
-                        content))
-
-        self.graph.add((self.id,
-                        self.namespace('ecrm')['P190_has_symbolic_content'],
-                        content))
-        
 
 class Page(Graphable):
     """Encapsulates OCR and NER processes. """
@@ -115,7 +41,6 @@ class Page(Graphable):
         self._alto = False
         self._doc = False
         self._entities = False
-
 
     @property
     def image_file(self):
@@ -158,7 +83,6 @@ class Page(Graphable):
         return [ent for ent in self.entities
                 if ent.type == "PERSON"]
 
-
     def load_image(self):
         """ Download the rendering of the canvas"""
 
@@ -166,7 +90,6 @@ class Page(Graphable):
         fname = "/tmp/" + image_uri.split('/')[-1]
         urllib.request.urlretrieve(image_uri, fname)
         self._image_file = fname
-
 
     def do_ocr_to_string(self):
         self._text = pytesseract.image_to_string(Image.open(self.image_file))

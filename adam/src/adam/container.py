@@ -4,10 +4,9 @@ The Container class contains pages: it
 is at one level a collection class for Page
 objects
 """
-from urllib.request import urlopen
-import json
 import spacy
-from adam.page import Page, Graphable
+from adam.graphable import Graphable
+from adam.page import Page
 
 
 class Container(Graphable):
@@ -50,7 +49,7 @@ class Container(Graphable):
         """
         Constructs a graph from all the pages.
         """
-        g = self.graph
+        graph = self.graph
         for page in self.pages:
             page.build_graph()
-            g += page.graph
+            graph += page.graph
