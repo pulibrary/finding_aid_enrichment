@@ -38,3 +38,12 @@ class Collection(Graphable):
             for manifest in self.manifest['manifests']:
                 self._containers.append(Container(manifest, self.nlp))
         return self._containers
+
+    def build_graph(self):
+        """
+        Constructs graph from all the containers.
+        """
+        graph = self.graph
+        for container in self.containers:
+            container.build_graph()
+            graph += container.graph
