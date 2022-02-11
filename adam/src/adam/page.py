@@ -13,8 +13,8 @@ Pages may be serialized as graphs of
 entities.
 """
 
+import os
 import urllib.request
-
 try:
     from PIL import Image
 except ImportError:
@@ -83,12 +83,22 @@ class Page(Graphable):
         return [ent for ent in self.entities
                 if ent.type == "PERSON"]
 
-    def load_image(self):
-        """ Download the rendering of the canvas"""
+    def file_path_of(self, image_uri):
+        """Returns the path of the (cached) image"""
+        return "/tmp/" + image_uri.split('/')[-1]
 
+    def image_is_cached(self, image_path):
+        return os.path.exists(image_path)
+
+    def load_image(self):
+        """
+        Download the rendering of the canvas, if it
+        hasn't already been downloaded.
+        """
         image_uri = self._canvas['rendering'][0]['@id']
-        fname = "/tmp/" + image_uri.split('/')[-1]
-        urllib.request.urlretrieve(image_uri, fname)
+        fname = self.file_path_of(image_uri)
+        if not self.image_is_cached(fname):
+            urllib.request.urlretrieve(image_uri, fname)
         self._image_file = fname
 
     def do_ocr_to_string(self):
