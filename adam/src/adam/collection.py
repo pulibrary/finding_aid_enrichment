@@ -1,6 +1,9 @@
 """
 The Collection class.
 """
+import json
+import urllib.request
+import logging
 import spacy
 from adam.graphable import Graphable
 from adam.container import Container
@@ -35,8 +38,18 @@ class Collection(Graphable):
         """
         if not self._containers:
             self._containers = []
+            print("generating containers")
             for manifest in self.manifest['manifests']:
-                self._containers.append(Container(manifest, self.nlp))
+                manifest_url = manifest['@id']
+                try:
+                    response = urllib.request.urlopen(manifest_url)
+                except urllib.error.HTTPError as e:
+                    logging.error("url problem")
+                    print(e.code)
+                else:
+                    print("loading response")
+                    container_manifest = json.loads(response.read())
+                    self._containers.append(Container(container_manifest, self.nlp))
         return self._containers
 
     def build_graph(self):

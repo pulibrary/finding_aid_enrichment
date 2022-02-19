@@ -14,6 +14,7 @@ entities.
 """
 
 import os
+import logging
 import urllib.request
 try:
     from PIL import Image
@@ -51,7 +52,7 @@ class Page(Graphable):
     @property
     def text(self):
         if not self._text:
-            self.do_ocr_to_string()
+            self.do_get_text_string()
         return self._text
 
     @property
@@ -95,11 +96,30 @@ class Page(Graphable):
         Download the rendering of the canvas, if it
         hasn't already been downloaded.
         """
-        image_uri = self._canvas['rendering'][0]['@id']
+        image_renderings = [r['@id'] for r in self._canvas['rendering'] if r['format'] == 'image/tiff']
+        image_uri = image_renderings[0]
         fname = self.file_path_of(image_uri)
         if not self.image_is_cached(fname):
             urllib.request.urlretrieve(image_uri, fname)
         self._image_file = fname
+
+    def do_get_text_string(self):
+        """
+        If OCR of the page already exists in Figgy, 
+        use that; otherwise, download the image file
+        and run ocr on it.
+        """
+        text_renderings = [r['@id'] for r in self._canvas['rendering'] if r['format'] == 'text/plain']
+        if text_renderings:
+            try:
+                fp = urllib.request.urlopen(text_renderings[0])
+                mbytes = fp.read()
+                fp.close()
+                self._text = mbytes.decode("utf-8")
+            except urllib.error.HTTPError as e:
+                logging.error("couldn't read ocr from figgy")
+        else:
+            self.do_ocr_to_string()
 
     def do_ocr_to_string(self):
         self._text = pytesseract.image_to_string(Image.open(self.image_file))

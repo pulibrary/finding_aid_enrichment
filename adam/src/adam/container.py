@@ -4,6 +4,7 @@ The Container class contains pages: it
 is at one level a collection class for Page
 objects
 """
+import logging
 import spacy
 from adam.graphable import Graphable
 from adam.page import Page
@@ -41,9 +42,12 @@ class Container(Graphable):
 
     def generate_pages(self):
         """Iterates over page images and creates Page objects for each"""
-        for canvas in self.manifest['sequences'][0]['canvases']:
-            page = Page(canvas, self.nlp)
-            self._pages.append(page)
+        if "sequences" in self.manifest.keys():
+            for canvas in self.manifest['sequences'][0]['canvases']:
+                page = Page(canvas, self.nlp)
+                self._pages.append(page)
+        else:
+            logging.debug("no sequences found")
 
     def build_graph(self):
         """
