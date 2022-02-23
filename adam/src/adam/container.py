@@ -4,6 +4,7 @@ The Container class contains pages: it
 is at one level a collection class for Page
 objects
 """
+from pathlib import Path
 import logging
 import urllib.request
 import json
@@ -16,11 +17,6 @@ class Container(Graphable):
     """
     The Container class.
     """
-    def __initold__(self, manifest_json, nlp=None):
-        super().__init__()
-        self._manifest = manifest_json
-        self._pages = []
-        self._nlp = nlp
 
     def __init__(self, manifest_uri, nlp=None):
         super().__init__()
@@ -28,6 +24,8 @@ class Container(Graphable):
         self._manifest = None
         self._pages = []
         self._nlp = nlp
+        self._id = self.manifest['@id'].split('/')[-2]
+
 
     @property
     def manifest(self):
@@ -78,3 +76,10 @@ class Container(Graphable):
         for page in self.pages:
             page.build_graph()
             graph += page.graph
+
+    def export(self, target_dir_name):
+        target_dir = Path(target_dir_name)
+        for page in self.pages:
+            name = str(page.id).split('/')[-1]
+            with open(target_dir / name, "w", encoding="utf-8") as f:
+                page.export(f)

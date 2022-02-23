@@ -45,10 +45,6 @@ class Page(Graphable):
         self._entities = False
 
     @property
-    def id(self):
-        return self._id.split('/')[-1]
-
-    @property
     def image_file(self):
         if not self._image_file:
             self.load_image()
