@@ -48,13 +48,16 @@ test_canvas_2 = {
         }
 
 
-# @pytest.fixture(name="basic_page")
-# def fixture_basic_page():
-#     return Page(test_canvas, spacy.load('en_core_web_sm'))
+@pytest.fixture(name="basic_page")
+def fixture_basic_page():
+    return Page(test_canvas, spacy.load('en_core_web_sm'))
 
 @pytest.fixture(name="page_with_ocr")
 def fixture_ocr_page():
     return Page(test_canvas_2, spacy.load('en_core_web_sm'))
+
+def test_id(basic_page):
+    assert basic_page.id == '84304756-8e12-4a21-aad1-ba6d67582266'
 
 # def test_text(basic_page):
 #     assert len(basic_page.text) > 0
