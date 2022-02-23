@@ -13,6 +13,7 @@ Pages may be serialized as graphs of
 entities.
 """
 
+import re
 import os
 import logging
 import urllib.request
@@ -53,6 +54,7 @@ class Page(Graphable):
     def text(self):
         if not self._text:
             self.do_get_text_string()
+            self.clean_ocr_text()
         return self._text
 
     @property
@@ -84,12 +86,21 @@ class Page(Graphable):
         return [ent for ent in self.entities
                 if ent.type == "PERSON"]
 
+    def clean_ocr_text(self):
+        """Stub for cleaning dirty ocr."""
+        p = re.compile(r"\n")
+        self._text = p.sub(' ', self._text)
+
     def file_path_of(self, image_uri):
         """Returns the path of the (cached) image"""
         return "/tmp/" + image_uri.split('/')[-1]
 
     def image_is_cached(self, image_path):
         return os.path.exists(image_path)
+
+    def rendering(self, rendering_type):
+        return [r['@id'] for r in self._canvas['rendering']
+                      if r['format'] == rendering_type]
 
     def load_image(self):
         """
@@ -109,16 +120,13 @@ class Page(Graphable):
         use that; otherwise, download the image file
         and run ocr on it.
         """
-        text_renderings = [r['@id'] for r in self._canvas['rendering'] if r['format'] == 'text/plain']
-        if text_renderings:
-            try:
-                fp = urllib.request.urlopen(text_renderings[0])
-                mbytes = fp.read()
-                fp.close()
-                self._text = mbytes.decode("utf-8")
-            except urllib.error.HTTPError as e:
-                logging.error("couldn't read ocr from figgy")
+        rendering_uri = self.rendering('text/plain')
+        if rendering_uri:
+            logging.info("there's a text/plain rendering in Figgy")
+            with urllib.request.urlopen(rendering_uri[0]) as response:
+                self._text = response.read().decode('utf-8')
         else:
+            logging.info("doing our own ocr")
             self.do_ocr_to_string()
 
     def do_ocr_to_string(self):
@@ -126,11 +134,11 @@ class Page(Graphable):
 
     def do_ocr_to_hocr(self):
         self._hocr = pytesseract.image_to_pdf_or_hocr(
-            Image.open(self.image_file), extension='hocr')
+            Image.open(self.image_file), extension='hocr').decode("utf-8")
 
     def do_ocr_to_alto(self):
         self._alto = pytesseract.image_to_alto_xml(
-            Image.open(self.image_file))
+            Image.open(self.image_file)).decode("utf-8")
 
     def do_nlp(self):
         if not self._nlp:
@@ -167,3 +175,12 @@ class Page(Graphable):
             self.graph.add((inscription_id,
                             ecrm['E55_Type'],
                             self.namespace('etype')[entity.type]))
+
+    def export(self, stream, format="text"):
+        if format == "hocr":
+            output = self.hocr
+        elif format == 'alto':
+            output = self.alto
+        else:
+            output = self.text
+        stream.write(output)

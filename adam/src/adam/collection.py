@@ -41,15 +41,7 @@ class Collection(Graphable):
             print("generating containers")
             for manifest in self.manifest['manifests']:
                 manifest_url = manifest['@id']
-                try:
-                    response = urllib.request.urlopen(manifest_url)
-                except urllib.error.HTTPError as e:
-                    logging.error("url problem")
-                    print(e.code)
-                else:
-                    print("loading response")
-                    container_manifest = json.loads(response.read())
-                    self._containers.append(Container(container_manifest, self.nlp))
+                self._containers.append(Container(manifest_url, self.nlp))
         return self._containers
 
     def build_graph(self):
