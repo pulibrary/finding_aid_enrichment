@@ -31,7 +31,7 @@ from adam.named_entity import NamedEntity
 
 class Page(Graphable):
     """Encapsulates OCR and NER processes. """
-    def __init__(self, canvas, spacy_pipeline=None):
+    def __init__(self, canvas, spacy_pipeline=None, metadata={}):
         super().__init__()
         self._canvas = canvas
         # self._id = self.gen_id('page')
@@ -43,6 +43,7 @@ class Page(Graphable):
         self._alto = False
         self._doc = False
         self._entities = False
+        self.metadata = metadata
 
     @property
     def image_file(self):
@@ -80,6 +81,10 @@ class Page(Graphable):
         if not self._entities:
             self._entities = [NamedEntity(ent) for ent in self.doc.ents]
         return self._entities
+
+    @property
+    def sentences(self):
+        return self.doc.sents
 
     @property
     def names(self):

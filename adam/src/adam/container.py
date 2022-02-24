@@ -25,7 +25,14 @@ class Container(Graphable):
         self._pages = []
         self._nlp = nlp
         self._id = self.manifest['@id'].split('/')[-2]
+        
 
+    @property
+    def metadata(self):
+        metadata = {}
+        for item in self.manifest['metadata']:
+            metadata[item['label']] = item['value']
+        return metadata
 
     @property
     def manifest(self):
@@ -63,7 +70,7 @@ class Container(Graphable):
         """Iterates over page images and creates Page objects for each"""
         if "sequences" in self.manifest.keys():
             for canvas in self.manifest['sequences'][0]['canvases']:
-                page = Page(canvas, self.nlp)
+                page = Page(canvas, self.nlp, metadata=self.metadata)
                 self._pages.append(page)
         else:
             logging.debug("no sequences found")
