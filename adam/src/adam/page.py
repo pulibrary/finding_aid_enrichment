@@ -12,7 +12,7 @@ The Page module encapsulates OCR and NER.
 Pages may be serialized as graphs of
 entities.
 """
-
+import json
 import re
 import os
 import logging
@@ -183,9 +183,15 @@ class Page(Graphable):
 
     def export(self, stream, format="text"):
         if format == "hocr":
-            output = self.hocr
+            stream.write(self.hocr)
         elif format == 'alto':
-            output = self.alto
+            stream.write(self.alto)
+        elif format == 'jsonl':
+            for s in self.sentences:
+                dict = {}
+                dict['text'] = s.text
+                dict['meta'] = self.metadata
+                json.dump(dict, stream, ensure_ascii=False)
+                stream.write("\n")
         else:
-            output = self.text
-        stream.write(output)
+            stream.write(self.text)
