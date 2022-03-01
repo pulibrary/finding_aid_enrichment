@@ -556,6 +556,21 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
+name = "sense2vec"
+version = "2.0.0"
+description = "Contextually-keyed word vectors"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+catalogue = ">=2.0.1,<2.1.0"
+numpy = ">=1.15.0"
+spacy = ">=3.0.0,<4.0.0"
+srsly = ">=2.4.0,<3.0.0"
+wasabi = ">=0.8.1,<1.1.0"
+
+[[package]]
 name = "setuptools"
 version = "60.6.0"
 description = "Easily download, build, install, upgrade, and uninstall Python packages"
@@ -982,7 +997,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "8d3289af663c772a2a1f0bc57da66ea84287c76e977a400ad2245f162ea79584"
+content-hash = "3ceeb9ede85aee7132aec8fa8cde11ab2ace8a78ae0a3447c007f0c4478f1126"
 
 [metadata.files]
 alabaster = [
@@ -1411,6 +1426,10 @@ rdflib = [
 requests = [
     {file = "requests-2.27.1-py2.py3-none-any.whl", hash = "sha256:f22fa1e554c9ddfd16e6e41ac79759e17be9e492b3587efa038054674760e72d"},
     {file = "requests-2.27.1.tar.gz", hash = "sha256:68d7c56fd5a8999887728ef304a6d12edc7be74f1cfa47714fc8b414525c9a61"},
+]
+sense2vec = [
+    {file = "sense2vec-2.0.0-py2.py3-none-any.whl", hash = "sha256:11d834b53b572aaf88feda0e90c3bbca3378ad47403df83adca44bff7e002a99"},
+    {file = "sense2vec-2.0.0.tar.gz", hash = "sha256:792a903a0d9575b88daf9a50fef6483c62bdaa2b1ecc74354635d9654de50e51"},
 ]
 setuptools = [
     {file = "setuptools-60.6.0-py3-none-any.whl", hash = "sha256:c99207037c38984eae838c2fd986f39a9ddf4fabfe0fddd957e622d1d1dcdd05"},

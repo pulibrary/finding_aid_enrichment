@@ -11,6 +11,7 @@ pytesseract = "^0.3.8"
 rdflib = "^6.1.1"
 shortuuid = "^1.0.8"
 requests = "^2.27.1"
+sense2vec = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
