@@ -4,6 +4,7 @@ The Container class contains pages: it
 is at one level a collection class for Page
 objects
 """
+import re
 from pathlib import Path
 import logging
 import urllib.request
@@ -54,6 +55,14 @@ class Container(Graphable):
             self.generate_pages()
         return self._pages
 
+    @property
+    def container_label(self):
+        if 'Container' in self.metadata.keys():
+            string_label = self.metadata['Container'][0]
+        else:
+            string_label = self.manifest['@id'].split('/')[-2]
+        return re.sub(r"[,. ]", "_", string_label)
+
     def load_manifest(self):
         logging.info("downloading manifest")
         try:
@@ -83,7 +92,8 @@ class Container(Graphable):
             graph += page.graph
 
     def export(self, target_dir_name, format="text"):
-        target_dir = Path(target_dir_name)
+        target_dir = Path(target_dir_name) / Path(self.container_label)
+        target_dir.mkdir()
         for page in self.pages:
             name = str(page.id).split('/')[-1] + format
             with open(target_dir / name, "w", encoding="utf-8") as output:
