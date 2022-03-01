@@ -24,8 +24,6 @@ class Container(Graphable):
         self._manifest = None
         self._pages = []
         self._nlp = nlp
-        self._id = self.manifest['@id'].split('/')[-2]
-        
 
     @property
     def metadata(self):
@@ -84,9 +82,9 @@ class Container(Graphable):
             page.build_graph()
             graph += page.graph
 
-    def export(self, target_dir_name):
+    def export(self, target_dir_name, format="text"):
         target_dir = Path(target_dir_name)
         for page in self.pages:
-            name = str(page.id).split('/')[-1]
-            with open(target_dir / name, "w", encoding="utf-8") as f:
-                page.export(f)
+            name = str(page.id).split('/')[-1] + format
+            with open(target_dir / name, "w", encoding="utf-8") as output:
+                page.export(output, format)
