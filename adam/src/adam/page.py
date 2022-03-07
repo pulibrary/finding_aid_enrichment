@@ -147,7 +147,7 @@ class Page(Graphable):
         Throw out blank lines; then group the text into blocks and filter
         out any block whose mean confidence score is below a threshold. 
 
-        Using algorithms suggsted in the following:
+        Using algorithms suggested in the following:
         - https://stackoverflow.com/questions/55406993/how-to-get-confidence-of-each-line-using-pytesseract
         - https://medium.com/geekculture/tesseract-ocr-understanding-the-contents-of-documents-beyond-their-text-a98704b7c655
 
@@ -163,7 +163,7 @@ class Page(Graphable):
         scores = text.groupby(['block_num'])['conf'].mean()
         data = []
         for i, r in blocks.iterrows():
-            if scores[i+1] > 95:
+            if scores[i+1] > 55:
                 data.append(" ".join(r['text']))
                 #return [' '.join(block) for block in data]
         self._text = " ".join(data)
