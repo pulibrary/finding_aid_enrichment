@@ -95,6 +95,6 @@ class Container(Graphable):
         target_dir = Path(target_dir_name) / Path(self.container_label)
         target_dir.mkdir()
         for page in self.pages:
-            name = str(page.id).split('/')[-1] + format
+            name = str(page.id).split('/')[-1] + '.' + format
             with open(target_dir / name, "w", encoding="utf-8") as output:
                 page.export(output, format)

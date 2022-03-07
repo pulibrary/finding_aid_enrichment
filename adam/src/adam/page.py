@@ -22,6 +22,7 @@ try:
 except ImportError:
     import Image
 import pytesseract
+import pandas
 import spacy
 from rdflib import URIRef
 from rdflib.namespace import RDF
@@ -121,6 +122,9 @@ class Page(Graphable):
 
     def do_get_text_string(self):
         """
+        (Disabling for now; using filtering version of
+        do_ocr_to_string().)
+
         If OCR of the page already exists in Figgy, 
         use that; otherwise, download the image file
         and run ocr on it.
@@ -135,6 +139,36 @@ class Page(Graphable):
             self.do_ocr_to_string()
 
     def do_ocr_to_string(self):
+        """
+        Converts image to plain text string and stores
+        it in self._text.
+
+        Process the image with pytesseract into a Pandas data frame.
+        Throw out blank lines; then group the text into blocks and filter
+        out any block whose mean confidence score is below a threshold. 
+
+        Using algorithms suggsted in the following:
+        - https://stackoverflow.com/questions/55406993/how-to-get-confidence-of-each-line-using-pytesseract
+        - https://medium.com/geekculture/tesseract-ocr-understanding-the-contents-of-documents-beyond-their-text-a98704b7c655
+
+        
+        """
+        df = pytesseract.image_to_data(Image.open(self.image_file),
+                                               output_type='data.frame')
+        # throw out blank lines
+        text = df[df.conf != -1]
+        blocks = text.groupby('block_num')['text'].apply(list)
+        #print(text)
+        blocks = blocks.reset_index()
+        scores = text.groupby(['block_num'])['conf'].mean()
+        data = []
+        for i, r in blocks.iterrows():
+            if scores[i+1] > 95:
+                data.append(" ".join(r['text']))
+                #return [' '.join(block) for block in data]
+        self._text = " ".join(data)
+
+    def do_ocr_to_string_simple(self):
         self._text = pytesseract.image_to_string(Image.open(self.image_file))
 
     def do_ocr_to_hocr(self):
