@@ -21,6 +21,7 @@ try:
     from PIL import Image
 except ImportError:
     import Image
+import cv2
 import pytesseract
 import pandas
 import spacy
@@ -108,6 +109,18 @@ class Page(Graphable):
         return [r['@id'] for r in self._canvas['rendering']
                       if r['format'] == rendering_type]
 
+    def load_image_old(self):
+        """
+        Download the rendering of the canvas, if it
+        hasn't already been downloaded.
+        """
+        image_renderings = [r['@id'] for r in self._canvas['rendering'] if r['format'] == 'image/tiff']
+        image_uri = image_renderings[0]
+        fname = self.file_path_of(image_uri)
+        if not self.image_is_cached(fname):
+            urllib.request.urlretrieve(image_uri, fname)
+        self._image_file = fname
+
     def load_image(self):
         """
         Download the rendering of the canvas, if it
@@ -117,6 +130,7 @@ class Page(Graphable):
         image_uri = image_renderings[0]
         fname = self.file_path_of(image_uri)
         if not self.image_is_cached(fname):
+            print("image not cached")
             urllib.request.urlretrieve(image_uri, fname)
         self._image_file = fname
 
@@ -138,7 +152,7 @@ class Page(Graphable):
             logging.info("doing our own ocr")
             self.do_ocr_to_string()
 
-    def do_ocr_to_string(self):
+    def do_ocr_to_string(self, conf=95):
         """
         Converts image to plain text string and stores
         it in self._text.
@@ -153,20 +167,13 @@ class Page(Graphable):
 
         
         """
-        df = pytesseract.image_to_data(Image.open(self.image_file),
-                                               output_type='data.frame')
-        # throw out blank lines
-        text = df[df.conf != -1]
-        blocks = text.groupby('block_num')['text'].apply(list)
-        #print(text)
-        blocks = blocks.reset_index()
-        scores = text.groupby(['block_num'])['conf'].mean()
-        data = []
-        for i, r in blocks.iterrows():
-            if scores[i+1] > 55:
-                data.append(" ".join(r['text']))
-                #return [' '.join(block) for block in data]
-        self._text = " ".join(data)
+        img = cv2.imread(self.image_file)
+        df = pytesseract.image_to_data(img, output_type='data.frame')
+        df = df[df.conf > conf]
+        print(f"df size=|{df.size}|")
+        df = df.reset_index()
+        df.fillna("", inplace=True)
+        self._text = " ".join([r['text'] for _,r in df.iterrows()])
 
     def do_ocr_to_string_simple(self):
         self._text = pytesseract.image_to_string(Image.open(self.image_file))
@@ -215,17 +222,24 @@ class Page(Graphable):
                             ecrm['E55_Type'],
                             self.namespace('etype')[entity.type]))
 
-    def export(self, stream, format="text"):
+    def export(self, file_path, format="txt"):
         if format == "hocr":
-            stream.write(self.hocr)
+            with open(file_path, "w", encoding="utf-8") as stream:
+                stream.write(self.hocr)
         elif format == 'alto':
-            stream.write(self.alto)
+            with open(file_path, "w", encoding="utf-8") as stream:
+                stream.write(self.alto)
         elif format == 'jsonl':
-            for s in self.sentences:
-                dict = {}
-                dict['text'] = s.text
-                dict['meta'] = self.metadata
-                json.dump(dict, stream, ensure_ascii=False)
-                stream.write("\n")
+            with open(file_path, "w", encoding="utf-8") as stream:
+                for s in self.sentences:
+                    dict = {}
+                    dict['text'] = s.text
+                    dict['meta'] = self.metadata
+                    json.dump(dict, stream, ensure_ascii=False)
+                    stream.write("\n")
+        elif format == 'rdf':
+            self.build_graph()
+            self.serialize(file_path)
         else:
-            stream.write(self.text)
+            with open(file_path, "w", encoding="utf-8") as stream:
+                stream.write(self.text)

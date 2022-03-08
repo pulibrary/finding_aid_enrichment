@@ -13,6 +13,7 @@ shortuuid = "^1.0.8"
 requests = "^2.27.1"
 sense2vec = "^2.0.0"
 pandas = "^1.4.1"
+opencv-python = "^4.5.5.62"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

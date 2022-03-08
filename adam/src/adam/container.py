@@ -91,10 +91,17 @@ class Container(Graphable):
             page.build_graph()
             graph += page.graph
 
-    def export(self, target_dir_name, format="text"):
+    def export_old(self, target_dir_name, format="txt"):
         target_dir = Path(target_dir_name) / Path(self.container_label)
         target_dir.mkdir()
         for page in self.pages:
             name = str(page.id).split('/')[-1] + '.' + format
             with open(target_dir / name, "w", encoding="utf-8") as output:
                 page.export(output, format)
+
+    def export(self, target_dir_name, format="txt"):
+        target_dir = Path(target_dir_name) / Path(self.container_label)
+        target_dir.mkdir()
+        for page in self.pages:
+            file_name = str(page.id).split('/')[-1] + '.' + format
+            page.export(target_dir / file_name, format)
