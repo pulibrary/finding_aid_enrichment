@@ -10,8 +10,8 @@ import logging
 import urllib.request
 import json
 import spacy
-from adam.graphable import Graphable
 from adam.page import Page
+from adam.graphable import Graphable
 
 
 class Container(Graphable):
@@ -27,7 +27,13 @@ class Container(Graphable):
         self._nlp = nlp
 
     @property
+    def _id(self):
+        """returns the uuid portion of the manifest @id"""
+        return self.manifest['@id'].split('/')[-2]
+
+    @property
     def metadata(self):
+        """returns a dict of metadata from the manifest"""
         metadata = {}
         for item in self.manifest['metadata']:
             metadata[item['label']] = item['value']
@@ -60,7 +66,7 @@ class Container(Graphable):
         if 'Container' in self.metadata.keys():
             string_label = self.metadata['Container'][0]
         else:
-            string_label = self.manifest['@id'].split('/')[-2]
+            string_label = self._id
         return re.sub(r"[,. ]", "_", string_label)
 
     def load_manifest(self):
@@ -91,17 +97,9 @@ class Container(Graphable):
             page.build_graph()
             graph += page.graph
 
-    def export_old(self, target_dir_name, format="txt"):
+    def export(self, target_dir_name, fmt="txt"):
         target_dir = Path(target_dir_name) / Path(self.container_label)
         target_dir.mkdir()
         for page in self.pages:
-            name = str(page.id).split('/')[-1] + '.' + format
-            with open(target_dir / name, "w", encoding="utf-8") as output:
-                page.export(output, format)
-
-    def export(self, target_dir_name, format="txt"):
-        target_dir = Path(target_dir_name) / Path(self.container_label)
-        target_dir.mkdir()
-        for page in self.pages:
-            file_name = str(page.id).split('/')[-1] + '.' + format
-            page.export(target_dir / file_name, format)
+            file_name = str(page.id).rsplit('/', maxsplit=1)[-1] + '.' + fmt
+            page.export(target_dir / file_name, fmt)

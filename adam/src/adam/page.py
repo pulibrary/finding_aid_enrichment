@@ -16,19 +16,27 @@ import json
 import re
 import os
 import logging
-import urllib.request
-try:
-    from PIL import Image
-except ImportError:
-    import Image
+import requests
+# import urllib.request
 import cv2
 import pytesseract
 import pandas
 import spacy
+from shutil import copyfileobj
 from rdflib import URIRef
 from rdflib.namespace import RDF
+from adam.global_vars import PAGE_IMAGE_CACHE
 from adam.graphable import Graphable
 from adam.named_entity import NamedEntity
+
+
+def file_path_of(image_uri):
+    """Returns the path of the (cached) image"""
+    return PAGE_IMAGE_CACHE / image_uri.split('/')[-1]
+
+def image_is_cached(image_uri):
+    """returns  does image exist in cache?"""
+    return os.path.exists(PAGE_IMAGE_CACHE / image_uri.split('/')[-1])
 
 
 class Page(Graphable):
@@ -37,9 +45,10 @@ class Page(Graphable):
         super().__init__()
         self._canvas = canvas
         # self._id = self.gen_id('page')
-        self._id = URIRef(canvas['@id'])
+        # self._id = URIRef(canvas['@id'])
         self._nlp = spacy_pipeline
         self._image_file = None
+        self._image = None
         self._text = False
         self._hocr = False
         self._alto = False
@@ -48,10 +57,32 @@ class Page(Graphable):
         self.metadata = metadata
 
     @property
+    def id(self):
+        return URIRef(self._canvas['@id'])
+
+    @property
+    def image_path(self):
+        return PAGE_IMAGE_CACHE / self.image_uri.split('/')[-1]
+
+    @property
+    def image(self):
+        if not self._image:
+            self._image = cv2.imread(str(self.image_file))
+        return self._image
+
+    @property
     def image_file(self):
-        if not self._image_file:
-            self.load_image()
-        return self._image_file
+        if not os.path.exists(self.image_path):
+            self.download_image()
+        return self.image_path
+
+    @property
+    def image_uri(self):
+        image_renderings = [r['@id'] for r in
+                            self._canvas['rendering']
+                            if r['format'] == 'image/tiff']
+        return image_renderings[0]
+        
 
     @property
     def text(self):
@@ -88,11 +119,6 @@ class Page(Graphable):
     def sentences(self):
         return self.doc.sents
 
-    @property
-    def names(self):
-        return [ent for ent in self.entities
-                if ent.type == "PERSON"]
-
     def clean_ocr_text(self):
         """Stub for cleaning dirty ocr."""
         p = re.compile(r"\n")
@@ -109,32 +135,17 @@ class Page(Graphable):
         return [r['@id'] for r in self._canvas['rendering']
                       if r['format'] == rendering_type]
 
-    def load_image_old(self):
-        """
-        Download the rendering of the canvas, if it
-        hasn't already been downloaded.
-        """
-        image_renderings = [r['@id'] for r in self._canvas['rendering'] if r['format'] == 'image/tiff']
-        image_uri = image_renderings[0]
-        fname = self.file_path_of(image_uri)
-        if not self.image_is_cached(fname):
-            urllib.request.urlretrieve(image_uri, fname)
-        self._image_file = fname
 
-    def load_image(self):
-        """
-        Download the rendering of the canvas, if it
-        hasn't already been downloaded.
-        """
-        image_renderings = [r['@id'] for r in self._canvas['rendering'] if r['format'] == 'image/tiff']
-        image_uri = image_renderings[0]
-        fname = self.file_path_of(image_uri)
-        if not self.image_is_cached(fname):
-            print("image not cached")
-            urllib.request.urlretrieve(image_uri, fname)
-        self._image_file = fname
+    def download_image(self):
+        response = requests.get(self.image_uri, stream=True)
+        if response.status_code == 200:
+            response.raw.decode_content = True
+            with open(self.image_path, 'wb') as f:
+                copyfileobj(response.raw, f)
+        else:
+            print(f"couldn't download image file at {self.image_path}")
 
-    def do_get_text_string(self):
+    def do_get_text_string(self, use_figgy=False):
         """
         (Disabling for now; using filtering version of
         do_ocr_to_string().)
@@ -143,11 +154,15 @@ class Page(Graphable):
         use that; otherwise, download the image file
         and run ocr on it.
         """
-        rendering_uri = self.rendering('text/plain')
-        if rendering_uri:
-            logging.info("there's a text/plain rendering in Figgy")
-            with urllib.request.urlopen(rendering_uri[0]) as response:
-                self._text = response.read().decode('utf-8')
+        if use_figgy:
+            rendering_uri = self.rendering('text/plain')
+            if rendering_uri:
+                logging.info("there's a text/plain rendering in Figgy")
+                response = requests.get(rendering_uri[0])
+                if response.status_code == 200:
+                    self._text = response.text
+                else:
+                    logging.info("couldn't download image file")
         else:
             logging.info("doing our own ocr")
             self.do_ocr_to_string()
@@ -167,8 +182,9 @@ class Page(Graphable):
 
         
         """
-        img = cv2.imread(self.image_file)
-        df = pytesseract.image_to_data(img, output_type='data.frame')
+#        import pdb; pdb.set_trace()
+
+        df = pytesseract.image_to_data(self.image, output_type='data.frame')
         df = df[df.conf > conf]
         print(f"df size=|{df.size}|")
         df = df.reset_index()
@@ -176,15 +192,13 @@ class Page(Graphable):
         self._text = " ".join([r['text'] for _,r in df.iterrows()])
 
     def do_ocr_to_string_simple(self):
-        self._text = pytesseract.image_to_string(Image.open(self.image_file))
+        self._text = pytesseract.image_to_string(self.image)
 
     def do_ocr_to_hocr(self):
-        self._hocr = pytesseract.image_to_pdf_or_hocr(
-            Image.open(self.image_file), extension='hocr').decode("utf-8")
+        self._hocr = pytesseract.image_to_pdf_or_hocr(self.image, extension='hocr').decode("utf-8")
 
     def do_ocr_to_alto(self):
-        self._alto = pytesseract.image_to_alto_xml(
-            Image.open(self.image_file)).decode("utf-8")
+        self._alto = pytesseract.image_to_alto_xml(self.image).decode("utf-8")
 
     def do_nlp(self):
         if not self._nlp:
@@ -232,10 +246,10 @@ class Page(Graphable):
         elif format == 'jsonl':
             with open(file_path, "w", encoding="utf-8") as stream:
                 for s in self.sentences:
-                    dict = {}
-                    dict['text'] = s.text
-                    dict['meta'] = self.metadata
-                    json.dump(dict, stream, ensure_ascii=False)
+                    sentences = {}
+                    sentences['text'] = s.text
+                    sentences['meta'] = self.metadata
+                    json.dump(sentences, stream, ensure_ascii=False)
                     stream.write("\n")
         elif format == 'rdf':
             self.build_graph()

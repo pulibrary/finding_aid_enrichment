@@ -11,7 +11,9 @@ class Graphable:
     """ The Graphable class holds info about ontologies"""
 
     def __init__(self):
-        """Initializes a Graphable. Sets up namespaces and establishes an id."""
+        """Initializes a Graphable. 
+        Sets up namespaces and establishes an id.
+        """
         self._graph = Graph()
         self._namespaces = {
             "ecrm": Namespace("http://erlangen-crm.org/200717/"),
@@ -45,6 +47,5 @@ class Graphable:
         """Does nothing in the base class; intended to be implemented by each subclass"""
         pass
 
-    def serialize(self, path=stdout, format='ttl'):
-        self.graph.serialize(destination=path, format=format)
-
+    def serialize(self, path=stdout, fmt='ttl'):
+        self.graph.serialize(destination=path, format=fmt)
