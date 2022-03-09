@@ -69,7 +69,7 @@ class Page(Graphable):
     def image(self):
         if not self._image:
             try:
-                self._image = imread(str(self.image_file))
+                self._image = Image.open(self.image_file)
             except IOError as e:
                 logging.exception(e)
         return self._image
