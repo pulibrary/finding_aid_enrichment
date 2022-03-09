@@ -18,7 +18,6 @@ import os
 import logging
 import requests
 # import urllib.request
-from cv2 import imread
 from PIL import Image
 import pytesseract
 import pandas
