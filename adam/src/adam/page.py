@@ -18,7 +18,8 @@ import os
 import logging
 import requests
 # import urllib.request
-import cv2
+from cv2 import imread
+from PIL import Image
 import pytesseract
 import pandas
 import spacy
@@ -67,7 +68,10 @@ class Page(Graphable):
     @property
     def image(self):
         if not self._image:
-            self._image = cv2.imread(str(self.image_file))
+            try:
+                self._image = imread(str(self.image_file))
+            except IOError as e:
+                logging.exception(e)
         return self._image
 
     @property
@@ -137,13 +141,21 @@ class Page(Graphable):
 
 
     def download_image(self):
-        response = requests.get(self.image_uri, stream=True)
-        if response.status_code == 200:
-            response.raw.decode_content = True
-            with open(self.image_path, 'wb') as f:
-                copyfileobj(response.raw, f)
-        else:
-            print(f"couldn't download image file at {self.image_path}")
+        try:
+            response = requests.get(self.image_uri, stream=True)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            raise SystemExit(e)
+
+        response.raw.decode_content = True
+        try:
+            image_file = self.image_path.open("wb")
+            copyfileobj(response.raw, image_file)
+        except OSError as e:
+            logging.exception(e)
+        finally:
+            image_file.close()
+
 
     def do_get_text_string(self, use_figgy=False):
         """
@@ -251,7 +263,7 @@ class Page(Graphable):
                     sentences['meta'] = self.metadata
                     json.dump(sentences, stream, ensure_ascii=False)
                     stream.write("\n")
-        elif format == 'rdf':
+        elif format == 'ttl':
             self.build_graph()
             self.serialize(file_path)
         else:
