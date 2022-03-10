@@ -99,7 +99,24 @@ class Container(Graphable):
 
     def export(self, target_dir_name, fmt="txt"):
         target_dir = Path(target_dir_name) / Path(self.container_label)
-        target_dir.mkdir()
+        target_dir.mkdir(parents=True, exist_ok=True)
         for page in self.pages:
             file_name = str(page.id).rsplit('/', maxsplit=1)[-1] + '.' + fmt
             page.export(target_dir / file_name, fmt)
+
+    def dump(self, target_dir_name):
+        """
+        Serializes the container in all formats:
+        plain text, hocr, alto, and rdf
+        """
+
+        for fmt in ['txt', 'hocr', 'jsonl']:
+            logging.info("exporting format %s" % fmt)
+            self.export(target_dir_name, fmt)
+
+        target_dir = Path(target_dir_name) / Path(self.container_label)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        self.build_graph()
+        logging.info("serializing RDF")
+        rdf_file_name = self.container_label + '.' + 'ttl'
+        self.serialize(target_dir / rdf_file_name)

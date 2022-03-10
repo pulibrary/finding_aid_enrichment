@@ -165,7 +165,6 @@ class Page(Graphable):
                 else:
                     logging.info("couldn't download image file")
         else:
-            logging.info("doing our own ocr")
             self.do_ocr_to_string()
 
     def do_ocr_to_string(self, conf=95):
@@ -183,22 +182,23 @@ class Page(Graphable):
 
         
         """
-
+        logging.info("running OCR")
         df = pytesseract.image_to_data(str(self.image_file), output_type='data.frame')
         df = df[df.conf > conf]
-        print(f"df size=|{df.size}|")
         df = df.reset_index()
         df.fillna("", inplace=True)
         self._text = " ".join([r['text'] for _,r in df.iterrows()])
 
     def do_ocr_to_string_simple(self):
-        self._text = pytesseract.image_to_string(self.image)
+        self._text = pytesseract.image_to_string(str(self.image_file))
 
     def do_ocr_to_hocr(self):
-        self._hocr = pytesseract.image_to_pdf_or_hocr(self.image, extension='hocr').decode("utf-8")
+        logging.info("generating hocr")
+        self._hocr = pytesseract.image_to_pdf_or_hocr(str(self.image_file), extension='hocr').decode("utf-8")
 
     def do_ocr_to_alto(self):
-        self._alto = pytesseract.image_to_alto_xml(self.image).decode("utf-8")
+        logging.info("generating alto")
+        self._alto = pytesseract.image_to_alto_xml(str(self.image_file)).decode("utf-8")
 
     def do_nlp(self):
         if not self._nlp:
