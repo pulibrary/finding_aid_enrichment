@@ -48,7 +48,6 @@ class Page(Graphable):
         # self._id = URIRef(canvas['@id'])
         self._nlp = spacy_pipeline
         self._image_file = None
-        self._image = None
         self._text = False
         self._hocr = False
         self._alto = False
@@ -63,15 +62,6 @@ class Page(Graphable):
     @property
     def image_path(self):
         return PAGE_IMAGE_CACHE / self.image_uri.split('/')[-1]
-
-    @property
-    def image(self):
-        if not self._image:
-            try:
-                self._image = Image.open(self.image_file)
-            except IOError as e:
-                logging.exception(e)
-        return self._image
 
     @property
     def image_file(self):
@@ -193,9 +183,8 @@ class Page(Graphable):
 
         
         """
-#        import pdb; pdb.set_trace()
 
-        df = pytesseract.image_to_data(self.image, output_type='data.frame')
+        df = pytesseract.image_to_data(str(self.image_file), output_type='data.frame')
         df = df[df.conf > conf]
         print(f"df size=|{df.size}|")
         df = df.reset_index()
