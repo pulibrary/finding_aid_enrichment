@@ -95,4 +95,4 @@ def test_rendering(page_with_ocr):
     assert not page_with_ocr.rendering('text/foo')
 
 def test_get_rendering(page_with_ocr):
-    assert page_with_ocr.text ==  "Kennan Papers (MC #076) Box 53 Folder 18 1957"
+    assert page_with_ocr.text.strip() ==  "George F. Kennan Papers (MC #076)  Box 53 Folder 18  1957"

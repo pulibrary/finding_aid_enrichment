@@ -11,7 +11,7 @@ class NamedEntity(Graphable):
     """Holds data from spaCy"""
     def __init__(self, ent):
         super().__init__()
-        self._id = self.gen_id('entity')
+        self._id = self.gen_id('appellation')
         self._string = ent.text
         self.type = ent.label_
         self.build_graph()
@@ -27,7 +27,11 @@ class NamedEntity(Graphable):
         content = Literal(self._string)
         self.graph.add((self.id,
                         RDF.type,
-                        self.namespace('ecrm')['E90_Symbolic_Object']))
+                        self.namespace('ecrm')['E41_Appellation']))
+
+        self.graph.add((self.id,
+                        self.namespace('ecrm')['E55_Type'],
+                        self.namespace('etype')[self.type]))
 
         self.graph.add((self.id,
                         RDFS.label,

@@ -19,6 +19,8 @@ class Graphable:
             "ecrm": Namespace("http://erlangen-crm.org/200717/"),
             "sc": Namespace("http://iiif.io/api/presentation/2#"),
             "page": Namespace("https://figgy.princeton.edu/concerns/pages/"),
+            "actor": Namespace("https://figgy.princeton.edu/concerns/actors/"),
+            "appellation": Namespace("https://figgy.princeton.edu/concerns/appellations/"),
             "entity": Namespace("https://figgy.princeton.edu/concerns/entities/"),
             "inscription": Namespace("https://figgy.princeton.edu/concerns/inscriptions/"),
             "etype": Namespace("https://figgy.princeton.edu/concerns/adam/")

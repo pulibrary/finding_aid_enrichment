@@ -1,5 +1,6 @@
-"""The adam Page module
+# The adam Page module
 
+"""
 The Page module encapsulates OCR and NER.
 
   Typical usage:
@@ -12,17 +13,14 @@ The Page module encapsulates OCR and NER.
 Pages may be serialized as graphs of
 entities.
 """
+
 import json
-import re
 import os
+from shutil import copyfileobj
 import logging
 import requests
-# import urllib.request
-from PIL import Image
 import pytesseract
-import pandas
 import spacy
-from shutil import copyfileobj
 from rdflib import URIRef
 from rdflib.namespace import RDF
 from adam.global_vars import PAGE_IMAGE_CACHE
@@ -30,29 +28,17 @@ from adam.graphable import Graphable
 from adam.named_entity import NamedEntity
 
 
-def file_path_of(image_uri):
-    """Returns the path of the (cached) image"""
-    return PAGE_IMAGE_CACHE / image_uri.split('/')[-1]
-
-def image_is_cached(image_uri):
-    """returns  does image exist in cache?"""
-    return os.path.exists(PAGE_IMAGE_CACHE / image_uri.split('/')[-1])
-
-
 class Page(Graphable):
     """Encapsulates OCR and NER processes. """
     def __init__(self, canvas, spacy_pipeline=None, metadata={}):
         super().__init__()
         self._canvas = canvas
-        # self._id = self.gen_id('page')
-        # self._id = URIRef(canvas['@id'])
         self._nlp = spacy_pipeline
         self._image_file = None
-        self._text = False
-        self._hocr = False
-        self._alto = False
         self._doc = False
         self._entities = False
+        self._ocr_data = False
+        self.ocr_processed = False
         self.metadata = metadata
 
     @property
@@ -75,26 +61,25 @@ class Page(Graphable):
                             self._canvas['rendering']
                             if r['format'] == 'image/tiff']
         return image_renderings[0]
-        
+
+    @property
+    def ocr_data(self):
+        """Use pytesseract to perform OCR and generate a
+        pandas data frame. """
+        if not self.ocr_processed:
+            self._ocr_data = pytesseract.image_to_data(
+                str(self.image_file),
+                output_type='data.frame'
+            )
+            self.ocr_processed = True
+        return self._ocr_data
 
     @property
     def text(self):
-        if not self._text:
-            self.do_get_text_string()
-            self.clean_ocr_text()
-        return self._text
-
-    @property
-    def hocr(self):
-        if not self._hocr:
-            self.do_ocr_to_hocr()
-        return self._hocr
-
-    @property
-    def alto(self):
-        if not self._alto:
-            self.do_ocr_to_alto()
-        return self._alto
+        """Constructs text string by concatenating all
+        the text blocks in the ocr data frame."""
+        data_frame = self.ocr_data.fillna("")
+        return " ".join([r['text'] for _, r in data_frame.iterrows()]).strip()
 
     @property
     def doc(self):
@@ -112,24 +97,12 @@ class Page(Graphable):
     def sentences(self):
         return self.doc.sents
 
-    def clean_ocr_text(self):
-        """Stub for cleaning dirty ocr."""
-        p = re.compile(r"\n")
-        self._text = p.sub(' ', self._text)
-
-    def file_path_of(self, image_uri):
-        """Returns the path of the (cached) image"""
-        return "/tmp/" + image_uri.split('/')[-1]
-
-    def image_is_cached(self, image_path):
-        return os.path.exists(image_path)
-
     def rendering(self, rendering_type):
         return [r['@id'] for r in self._canvas['rendering']
-                      if r['format'] == rendering_type]
-
+                if r['format'] == rendering_type]
 
     def download_image(self):
+        logging.info("downloading image")
         try:
             response = requests.get(self.image_uri, stream=True)
             response.raise_for_status()
@@ -145,65 +118,31 @@ class Page(Graphable):
         finally:
             image_file.close()
 
+    def filtered_text(self, threshold=95):
+        """Returns string composed only of text
+        blocks with confidence scores higher
+        than threshold.
 
-    def do_get_text_string(self, use_figgy=False):
-        """
-        (Disabling for now; using filtering version of
-        do_ocr_to_string().)
-
-        If OCR of the page already exists in Figgy, 
-        use that; otherwise, download the image file
-        and run ocr on it.
-        """
-        if use_figgy:
-            rendering_uri = self.rendering('text/plain')
-            if rendering_uri:
-                logging.info("there's a text/plain rendering in Figgy")
-                response = requests.get(rendering_uri[0])
-                if response.status_code == 200:
-                    self._text = response.text
-                else:
-                    logging.info("couldn't download image file")
-        else:
-            self.do_ocr_to_string()
-
-    def do_ocr_to_string(self, conf=95):
-        """
-        Converts image to plain text string and stores
-        it in self._text.
 
         Process the image with pytesseract into a Pandas data frame.
         Throw out blank lines; then group the text into blocks and filter
-        out any block whose mean confidence score is below a threshold. 
+        out any block whose mean confidence score is below a threshold.
 
         Using algorithms suggested in the following:
         - https://stackoverflow.com/questions/55406993/how-to-get-confidence-of-each-line-using-pytesseract
         - https://medium.com/geekculture/tesseract-ocr-understanding-the-contents-of-documents-beyond-their-text-a98704b7c655
-
-        
         """
-        logging.info("running OCR")
-        df = pytesseract.image_to_data(str(self.image_file), output_type='data.frame')
-        df = df[df.conf > conf]
-        df = df.reset_index()
-        df.fillna("", inplace=True)
-        self._text = " ".join([r['text'] for _,r in df.iterrows()])
 
-    def do_ocr_to_string_simple(self):
-        self._text = pytesseract.image_to_string(str(self.image_file))
-
-    def do_ocr_to_hocr(self):
-        logging.info("generating hocr")
-        self._hocr = pytesseract.image_to_pdf_or_hocr(str(self.image_file), extension='hocr').decode("utf-8")
-
-    def do_ocr_to_alto(self):
-        logging.info("generating alto")
-        self._alto = pytesseract.image_to_alto_xml(str(self.image_file)).decode("utf-8")
+        data = self.ocr_data
+        data = data[data.conf > threshold]
+        data = data.reset_index()
+        data = data.fillna("")
+        return " ".join([r['text'] for _, r in data.iterrows()]).strip()
 
     def do_nlp(self):
         if not self._nlp:
             self._nlp = spacy.load('en_core_web_lg')
-        self._doc = self._nlp(self.text)
+        self._doc = self._nlp(self.filtered_text())
         return self._doc
 
     def build_graph(self):
@@ -232,18 +171,8 @@ class Page(Graphable):
                             ecrm['P128i_is_carried_by'],
                             self.id))
 
-            self.graph.add((inscription_id,
-                            ecrm['E55_Type'],
-                            self.namespace('etype')[entity.type]))
-
     def export(self, file_path, format="txt"):
-        if format == "hocr":
-            with open(file_path, "w", encoding="utf-8") as stream:
-                stream.write(self.hocr)
-        elif format == 'alto':
-            with open(file_path, "w", encoding="utf-8") as stream:
-                stream.write(self.alto)
-        elif format == 'jsonl':
+        if format == 'jsonl':
             with open(file_path, "w", encoding="utf-8") as stream:
                 for s in self.sentences:
                     sentences = {}
@@ -251,7 +180,9 @@ class Page(Graphable):
                     sentences['meta'] = self.metadata
                     json.dump(sentences, stream, ensure_ascii=False)
                     stream.write("\n")
-        elif format == 'ttl':
+        elif format == 'csv':
+            self.ocr_data.to_csv(file_path)
+        elif format == 'rdf':
             self.build_graph()
             self.serialize(file_path)
         else:

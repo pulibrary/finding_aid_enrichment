@@ -110,7 +110,7 @@ class Container(Graphable):
         plain text, hocr, alto, and rdf
         """
 
-        for fmt in ['txt', 'hocr', 'jsonl']:
+        for fmt in ['txt', 'csv', 'jsonl']:
             logging.info("exporting format %s" % fmt)
             self.export(target_dir_name, fmt)
 
