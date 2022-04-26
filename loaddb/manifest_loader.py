@@ -4,6 +4,8 @@
 A ManifestLoader object is used to load a IIIF manifest into a
 GraphDB repository.
 
+THIS ONE WORKS
+
 Usage:
 
   manifest_url = 'https://figgy.princeton.edu/concern/scanned_resources/2a701cb1-33d4-4112-bf5d-65123e8aa8e7/manifest'
