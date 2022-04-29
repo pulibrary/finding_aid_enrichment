@@ -19,12 +19,17 @@ class Container(Graphable):
     The Container class.
     """
 
-    def __init__(self, manifest_uri, nlp=None):
+    def __init__(self, manifest_uri, nlp=None, cache_dir_root=None):
         super().__init__()
         self._manifest_uri = manifest_uri
         self._manifest = None
         self._pages = []
         self._nlp = nlp
+        self._cache_dir_root = cache_dir_root
+
+    @property
+    def cache_dir(self):
+        return Path(self._cache_dir_root) / Path(self.container_label)
 
     @property
     def _id(self):
@@ -70,7 +75,7 @@ class Container(Graphable):
         return re.sub(r"[,. ]", "_", string_label)
 
     def load_manifest(self):
-        logging.info("downloading manifest")
+        logging.info("downloading manifest |%s|" % self._manifest_uri)
         try:
             with urllib.request.urlopen(self._manifest_uri) as response:
                 self._manifest = json.loads(response.read())
@@ -83,7 +88,7 @@ class Container(Graphable):
         """Iterates over page images and creates Page objects for each"""
         if "sequences" in self.manifest.keys():
             for canvas in self.manifest['sequences'][0]['canvases']:
-                page = Page(canvas, self.nlp, metadata=self.metadata)
+                page = Page(canvas, self.nlp, self.metadata, self.cache_dir)
                 self._pages.append(page)
         else:
             logging.debug("no sequences found")

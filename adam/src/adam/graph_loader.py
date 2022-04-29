@@ -3,7 +3,7 @@ import json
 
 manifest= 'https://figgy.princeton.edu/concern/scanned_resources/2a701cb1-33d4-4112-bf5d-65123e8aa8e7/manifest'
 
-class GraphLoader:
+class ManifestLoader:
     """Loads a manifest into GraphDB via its
     rest interface."""
 
@@ -36,7 +36,6 @@ class GraphLoader:
                                          "stopOnError": True},
                       "requestIdHeadersToForward": None}
 
-
     @property
     def repository(self):
         return self._repository
@@ -59,9 +58,18 @@ class GraphLoader:
     def headers(self):
         return self._headers
 
-    
     def load(self):
         response = requests.post(self.url,
                                  headers=self.headers,
                                  data=self.data)
         return response
+
+def load_ttl_file(path):
+    headers = {"Content-Type": "application/x-turtle"}
+    url = "http://localhost:7200/repositories/thunk/statements"
+
+    with open(path, 'rb') as f:
+        response = requests.post(url, headers=headers, data=f)
+    return  response
+
+file = "/Users/cwulfman/Desktop/correspondence_data/Box_1__Folder_1/Box_1__Folder_1.ttl"

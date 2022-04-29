@@ -17,12 +17,14 @@ entities.
 import json
 import os
 from shutil import copyfileobj
+from pathlib import Path
 import logging
 import requests
 import pytesseract
+import pandas as pd
 import spacy
-from rdflib import URIRef
-from rdflib.namespace import RDF
+from rdflib import URIRef, Literal
+from rdflib.namespace import RDF, RDFS
 from adam.global_vars import PAGE_IMAGE_CACHE
 from adam.graphable import Graphable
 from adam.named_entity import NamedEntity
@@ -30,7 +32,7 @@ from adam.named_entity import NamedEntity
 
 class Page(Graphable):
     """Encapsulates OCR and NER processes. """
-    def __init__(self, canvas, spacy_pipeline=None, metadata={}):
+    def __init__(self, canvas, spacy_pipeline=None, metadata={}, cache_dir=None):
         super().__init__()
         self._canvas = canvas
         self._nlp = spacy_pipeline
@@ -38,8 +40,10 @@ class Page(Graphable):
         self._doc = False
         self._entities = False
         self._ocr_data = False
+        self._text = ""
         self.ocr_processed = False
         self.metadata = metadata
+        self.cache_dir = Path(cache_dir)
 
     @property
     def id(self):
@@ -66,6 +70,10 @@ class Page(Graphable):
     def ocr_data(self):
         """Use pytesseract to perform OCR and generate a
         pandas data frame. """
+        if self.cache_dir:
+            file_name = str(self.id).rsplit('/', maxsplit=1)[-1] + '.csv'
+            self._ocr_data = pd.read_csv(self.cache_dir / Path(file_name))
+            self.ocr_processed = True
         if not self.ocr_processed:
             self._ocr_data = pytesseract.image_to_data(
                 str(self.image_file),
@@ -78,8 +86,16 @@ class Page(Graphable):
     def text(self):
         """Constructs text string by concatenating all
         the text blocks in the ocr data frame."""
-        data_frame = self.ocr_data.fillna("")
-        return " ".join([r['text'] for _, r in data_frame.iterrows()]).strip()
+
+        if not self._text:
+            if self.cache_dir:
+                file_name = str(self.id).rsplit('/', maxsplit=1)[-1] + '.txt'
+                with open(self.cache_dir / Path(file_name), 'r') as f:
+                    self._text = f.read()
+            else:
+                data_frame = self.ocr_data.fillna("")
+                self._text = " ".join([r['text'] for _, r in data_frame.iterrows()]).strip()
+        return self._text
 
     @property
     def doc(self):
@@ -146,6 +162,31 @@ class Page(Graphable):
         return self._doc
 
     def build_graph(self):
+        g = self.graph
+        for entity in self.entities:
+            inscription_id = self.gen_id('inscription')
+            self.graph.add((inscription_id,
+                            RDF.type,
+                            self.namespace('ecrm')['E34_Inscription']))
+
+            self.graph.add((inscription_id,
+                            RDFS.label,
+                            Literal(entity._string)))
+
+            self.graph.add((inscription_id,
+                            self.namespace('ecrm')['P128i_is_carried_by'],
+                            self.id))
+
+            self.graph.add((inscription_id,
+                            self.namespace('ecrm')['P190_has_symbolic_content'],
+                            Literal(entity._string)))
+
+            self.graph.add((inscription_id,
+                            self.namespace('ecrm')['E55_Type'],
+                            Literal(entity.type)))
+                            
+
+    def build_graph_old(self):
         """Constructs a graph of inscriptions on the page. The inscriptions
         are composed of the entities recognized by spaCy.
 
