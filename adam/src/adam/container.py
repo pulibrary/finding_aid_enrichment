@@ -29,7 +29,10 @@ class Container(Graphable):
 
     @property
     def cache_dir(self):
-        return Path(self._cache_dir_root) / Path(self.container_label)
+        if self._cache_dir_root:
+            return Path(self._cache_dir_root) / Path(self.container_label)
+        else:
+            return None
 
     @property
     def _id(self):

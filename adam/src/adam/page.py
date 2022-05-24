@@ -43,7 +43,9 @@ class Page(Graphable):
         self._text = ""
         self.ocr_processed = False
         self.metadata = metadata
-        self.cache_dir = Path(cache_dir)
+        self.cache_dir = None
+        if cache_dir:
+            self.cache_dir = Path(cache_dir)
 
     @property
     def id(self):
