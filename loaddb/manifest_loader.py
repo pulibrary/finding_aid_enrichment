@@ -9,7 +9,7 @@ THIS ONE WORKS
 Usage:
 
   manifest_url = 'https://figgy.princeton.edu/concern/scanned_resources/2a701cb1-33d4-4112-bf5d-65123e8aa8e7/manifest'
-
+p
   repository = "cold_war_papers"
 
   server_url = "http://localhost:7200"
@@ -19,7 +19,12 @@ Usage:
   response = loader.load()
 """
 
+import sys
+from pathlib import Path
+import argparse
 import json
+from sys import stdout
+import logging
 import requests
 
 
@@ -83,3 +88,38 @@ class ManifestLoader:
                                  headers=self.headers,
                                  data=self.data)
         return response
+
+
+# CLI
+
+def parse_args(args):
+    parser = argparse.ArgumentParser(
+        description="upload manifests from list of manifests")
+    parser.add_argument('manifest_list')
+    parser.add_argument('repository')
+    parser.add_argument('server')
+    return parser.parse_args(args)
+
+def main(args):
+    args = parse_args(args)
+    _logger = logging.getLogger(__name__)
+    log_format = "[%(asctime)s] %(levelname)s:%(name)s:%(message)s"
+    logging.basicConfig(level=logging.INFO,
+                        stream=stdout,
+                        format=log_format,
+                        datefmt="%Y-%m-%d %H:%M:%S")
+
+    with open(args.manifest_list, 'r', encoding="utf-8") as file:
+        manifests = file.readlines()
+        for manifest_url in manifests:
+            logging.info("loading %s" % manifest_url)
+            result = ManifestLoader(manifest_url,
+                                    args.repository,
+                                    args.server).load()
+            logging.info("result: %s" % result)
+
+def run():
+    main(sys.argv[1:])
+
+if __name__ == "__main__":
+    run()
