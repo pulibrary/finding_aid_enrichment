@@ -19,12 +19,21 @@ def analyze_manifest(manifest_url, out_dir=_default_output_dir):
     container = Container(manifest_url)
     container.dump(out_dir)
 
+def analyze_manifests(manifest_list, out_dir):
+    with open(manifest_list, 'r') as m:
+        manifests = m.readlines()
+        for manifest_url in manifests:
+            _logger.info(f"processing {manifest_url}")
+            container = Container(manifest_url.strip())
+            container.dump(out_dir)
+            _logger.info(f"done with {manifest_url}")
+
 # CLI
 
 
 def parse_args(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument(dest="uri")
+    parser.add_argument(dest="source_file")
     parser.add_argument(dest="out_dir")
     parser.add_argument(
         "-v",
@@ -60,7 +69,7 @@ def setup_logging(loglevel):
 def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
-    analyze_manifest(args.uri, args.out_dir)
+    analyze_manifests(args.source_file, args.out_dir)
     _logger.info("Script ends here")
 
 

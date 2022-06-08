@@ -24,7 +24,7 @@ Sphinx = "^4.4.0"
 tox = "^3.24.5"
 
 [tool.poetry.scripts]
-analyze_manifest = "adam.cli:run"
+analyze_manifests = "adam.cli:run"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
