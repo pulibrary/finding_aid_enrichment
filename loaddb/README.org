@@ -1,0 +1,24 @@
+* Loading Files into GraphDB
+We can load two different kinds of graph into the triple store: graphs of data in CRM and IIIF manifests.  This directory contains scripts for doing this.
+
+## Before You Start
+Before you can load data, you have to set up a repository to load it into.  Use the GraphDB workbench to create a repository
+
+
+https://stackoverflow.com/questions/69741890/loading-data-into-a-named-graph-in-graphdb-using-the-rest-api-or-the-rdf4j-api
+
+Once you have GraphDB running and a repository set up (we'll call ours test for now), you can load the triples.  It doesn't matter what order you load them in; here we'll start with the manifests.
+
+#+begin_src shell
+  python manifest_loader.py ColdWarPapers/MC076/subseries_1a/manifest_list.txt test http://localhost:7200
+#+end_src
+
+Next, we'll load the CIDOC-CRM schema.  We can use the GraphDB Workbench application to do this.
+
+Finally, we'll upload the data.
+
+#+begin_src shell
+  python ttl_loader.py ~/Desktop/ColdWarPapers/MC076/subseries_1a/data
+#+end_src
+
+This will take some time, depending on your server.
