@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "nel"
+version = "0.1.0"
+description = ""
+authors = ["Cliff Wulfman <cwulfman@princeton.edu>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+rdflib = "^6.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
