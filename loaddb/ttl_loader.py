@@ -10,7 +10,8 @@ import requests
 
 def load_ttl_file(path):
     headers = {"Content-Type": "application/x-turtle"}
-    url = "http://localhost:7200/repositories/Kennan_subseries_1A/statements"
+#    url = "http://localhost:7200/repositories/Kennan_subseries_1A/statements"
+    url = "http://localhost:7200/repositories/test_kennan/statements"
 
     with open(path, 'rb') as f:
         print(path)

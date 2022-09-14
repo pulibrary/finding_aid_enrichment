@@ -18,7 +18,7 @@ Next, we'll load the CIDOC-CRM schema.  We can use the GraphDB Workbench applica
 Finally, we'll upload the data.
 
 #+begin_src shell
-  python ttl_loader.py ~/Desktop/ColdWarPapers/MC076/subseries_1a/data
+  python ttl_loader.py ~/Desktop/ColdWarPapers/MC076/subseries_1a/data/rdf
 #+end_src
 
 This will take some time, depending on your server.
