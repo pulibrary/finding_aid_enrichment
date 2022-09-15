@@ -96,6 +96,15 @@ class Container(Graphable):
         else:
             logging.debug("no sequences found")
 
+    def download_pages(self):
+        """
+        Downloads all page images
+        """
+        for page in self.pages:
+            page.download_image()
+
+
+
     def build_graph(self):
         """
         Constructs a graph from all the pages.

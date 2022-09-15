@@ -186,7 +186,7 @@ class Page(Graphable):
             self.graph.add((inscription_id,
                             self.namespace('ecrm')['E55_Type'],
                             Literal(entity.type)))
-                            
+
 
     def build_graph_old(self):
         """Constructs a graph of inscriptions on the page. The inscriptions
