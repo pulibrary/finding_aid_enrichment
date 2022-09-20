@@ -23,6 +23,7 @@ Sphinx = "^4.4.0"
 tox = "^3.24.5"
 
 [tool.poetry.scripts]
+create_graph = "adam.create_graph:run"
 analyze_manifests = "adam.cli:run"
 analyze_manifest = "adam.analyze_manifest:run"
 download_pages = "adam.download_pages:run"

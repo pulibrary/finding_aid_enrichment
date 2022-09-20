@@ -1,4 +1,4 @@
-'''Create named entities from data file'''
+"""Create named entities from data file"""
 import os
 import csv
 
@@ -9,16 +9,15 @@ path = "/Users/cwulfman/Desktop/ColdWarPapers/MC076/openrefine_data_A-D.csv"
 
 appellations = {}
 
-with open(path, 'r') as data_file:
+with open(path, "r") as data_file:
     reader = csv.DictReader(data_file)
     for row in reader:
-        appellation = row['appellation']
+        appellation = row["appellation"]
         if appellation not in appellations.keys():
             appellations[appellation] = {}
-            appellations[appellation]['viaf_id'] = row['VIAF_ID']
-            appellations[appellation]['inscriptions'] = []
-        appellations[appellation]['inscriptions'].append(row['inscription'])
-        
+            appellations[appellation]["viaf_id"] = row["VIAF_ID"]
+            appellations[appellation]["inscriptions"] = []
+        appellations[appellation]["inscriptions"].append(row["inscription"])
 
 
 # with open(data_file, 'r') as f:
